@@ -16,7 +16,7 @@
 #' To request updated lab data, email Minh-Ly's group.
 #'
 #' @returns `tibble` The lab dataset with additional timeliness columns added.
-#' @export
+#' @internal
 #'
 #' @examples
 #' \dontrun{
