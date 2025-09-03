@@ -30,7 +30,7 @@ get_afp_lab_processing_timeliness <- function(lab_data, end_date = Sys.Date()) {
 
   # Check if there are data available for the current year
   check <- lab_data |>
-    dplyr::filter(dplyr::between(DateStoolCollected, start_date_month, end_date_month))
+    dplyr::filter(dplyr::between(CaseDate, start_date_month, end_date_month))
   if (nrow(check) == 0) {
     cli::cli_alert_warning(paste0("No data available for the previous three months from the end date.",
                                   "No calculations will be available in the year of the end date."))
@@ -40,8 +40,8 @@ get_afp_lab_processing_timeliness <- function(lab_data, end_date = Sys.Date()) {
     # Lab processing timeliness
     # From date stool received in lab to final rRTPCR results
     dplyr::mutate(days.rec.lab.final = DateFinalrRTPCRResults - DateStoolReceivedinLab,
-                  year_month = lubridate::floor_date(DateStoolCollected, unit = "months"),
-                  month = lubridate::month(DateStoolCollected, label = TRUE)) |>
+                  year_month = lubridate::floor_date(CaseDate, unit = "months"),
+                  month = lubridate::month(CaseDate, label = TRUE)) |>
     # Filter erroneous data
     dplyr::filter(!is.na(.data$days.rec.lab.final),
                   (.data$days.rec.lab.final >= 0 & .data$days.rec.lab.final <= 365),
