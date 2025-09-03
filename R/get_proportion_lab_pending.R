@@ -5,7 +5,6 @@
 #' since the end_date specified.
 #'
 #' @param afp_data `tibble` AFP linelist.
-#' @param end_date `str` End date of analysis. Defaults to the current date.
 #'
 #' @returns `tibble` Summarizes the lab pending samples from the last three months.
 #' @export
@@ -15,14 +14,10 @@
 #' raw_data <- get_all_polio_data()
 #' get_proportion_lab_pending(raw_data$afp)
 #' }
-get_proportion_lab_pending <- function(afp_data, end_date = Sys.Date()) {
-
-  end_date <- lubridate::as_date(end_date)
-  end_date_month <- end_date - months(1)
-  start_date_month <- end_date - months(3)
+get_proportion_lab_pending <- function(afp_data) {
 
   summary <- afp_data |>
-    dplyr::filter(dplyr::between(stooltolabdate, start_date_month, end_date_month),
+    dplyr::filter(stooltolabdate >= lubridate::floor_date(Sys.Date() - months(3), unit = "months"),
                   cdc.classification.all2 == "LAB PENDING") |>
     dplyr::mutate(month = lubridate::month(stooltolabdate, label = TRUE),
                   year = lubridate::year(stooltolabdate)) |>
