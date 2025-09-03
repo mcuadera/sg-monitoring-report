@@ -19,6 +19,9 @@ get_negative_lab_processing_timeliness <- function(lab_data, end_date = Sys.Date
     dplyr::mutate(month = lubridate::month(CaseDate, label = TRUE),
                   days.collect.notif.hq = as.numeric(DateNotificationtoHQ - DateStoolCollected)) |>
     dplyr::filter(year >= lubridate::year(end_date) - 1,
+                  month %in% format(seq(lubridate::floor_date(end_date, unit = "years"),
+                                        end_date,
+                                        by = "months"), format = "%b"),
                   !is.na(days.collect.notif.hq),
                   dplyr::between(days.collect.notif.hq, 0, 365),
                   FinalCellCultureResult %in% c("Negative", "NPEV", NA)
@@ -27,6 +30,8 @@ get_negative_lab_processing_timeliness <- function(lab_data, end_date = Sys.Date
     dplyr::summarize(median = median(days.collect.notif.hq, na.rm = TRUE), .groups = "drop") |>
     dplyr::arrange(year) |>
     tidyr::pivot_wider(names_from = year, values_from = median)
+
+  cli::cli_alert_info("Note: If end date is not the month end, comparisons from the previous years may be inaccurate")
 
   return(summary)
 }

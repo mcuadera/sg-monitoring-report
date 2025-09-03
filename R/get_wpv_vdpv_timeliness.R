@@ -30,7 +30,9 @@ get_wpv_vdpv_timeliness <- function(pos, end_date = Sys.Date(), type = "AFP") {
                   year = lubridate::year(dateonset),
                   days.on.notif.hq = as.numeric(lubridate::as_date(datenotificationtohq) - dateonset)) |>
     dplyr::filter(year >= lubridate::year(end_date) - 1,
-                  dplyr::between(month, "Jan", lubridate::month(end_date, label = TRUE)),
+                  month %in% format(seq(lubridate::floor_date(end_date, unit = "years"),
+                                      end_date,
+                                      by = "months"), format = "%b"),
                   !is.na(days.on.notif.hq),
                   dplyr::between(days.on.notif.hq, 0, 365),
                   stringr::str_detect(measurement, "WILD|VDPV")) |>
@@ -39,7 +41,7 @@ get_wpv_vdpv_timeliness <- function(pos, end_date = Sys.Date(), type = "AFP") {
     dplyr::arrange(year) |>
     tidyr::pivot_wider(names_from = year, values_from = median)
 
-  cli::cli_alert_info("Note: If end date is not the month end, comparisons from the previous year may be inaccurate")
+  cli::cli_alert_info("Note: If end date is not the month end, comparisons from the previous years may be inaccurate")
 
   return(summary)
 

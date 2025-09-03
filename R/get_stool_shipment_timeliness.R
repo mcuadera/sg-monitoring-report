@@ -22,7 +22,9 @@ get_stool_shipment_timeliness <- function(lab_data, end_date = Sys.Date()) {
     dplyr::mutate(month = lubridate::month(CaseDate, label = TRUE),
                   days.collect.rec.lab = as.numeric(DateStoolReceivedinLab - DateStoolCollected)) |>
     dplyr::filter(year >= lubridate::year(end_date) - 1,
-                  dplyr::between(month, "Jan", lubridate::month(end_date, label = TRUE)),
+                  month %in% format(seq(lubridate::floor_date(end_date, unit = "years"),
+                                        end_date,
+                                        by = "months"), format = "%b"),
                   !is.na(days.collect.rec.lab),
                   dplyr::between(days.collect.rec.lab, 0, 365)) |>
     dplyr::group_by(whoregion, country, culture.itd.cat, year, month) |>
