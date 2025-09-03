@@ -17,14 +17,14 @@
 get_negative_lab_processing_timeliness <- function(lab_data, end_date = Sys.Date()) {
   summary <- lab_data |>
     dplyr::mutate(month = lubridate::month(CaseDate, label = TRUE),
-                  days.collect.rec.lab = as.numeric(DateStoolReceivedinLab - DateStoolCollected)) |>
+                  days.collect.notif.hq = as.numeric(DateNotificationtoHQ - DateStoolCollected)) |>
     dplyr::filter(year >= lubridate::year(end_date) - 1,
-                  !is.na(days.collect.rec.lab),
-                  dplyr::between(days.collect.rec.lab, 0, 365),
+                  !is.na(days.collect.notif.hq),
+                  dplyr::between(days.collect.notif.hq, 0, 365),
                   FinalCellCultureResult %in% c("Negative", "NPEV", NA)
                   ) |>
     dplyr::group_by(whoregion, country, culture.itd.cat, year, month) |>
-    dplyr::summarize(median = median(days.collect.rec.lab, na.rm = TRUE), .groups = "drop") |>
+    dplyr::summarize(median = median(days.collect.notif.hq, na.rm = TRUE), .groups = "drop") |>
     dplyr::arrange(year) |>
     tidyr::pivot_wider(names_from = year, values_from = median)
 
