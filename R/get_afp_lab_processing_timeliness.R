@@ -1,7 +1,7 @@
 #' Timeliness of lab processing
 #'
 #' @description
-#' Calculates the median time AFP samples arrive in lab to final rRT-PCR results
+#' Calculates the median time AFP samples arrive in lab to final lab results
 #' from the previous three months for the past three years.
 #'
 #' @param lab_data `tibble` Lab data with AFP samples.
@@ -39,7 +39,7 @@ get_afp_lab_processing_timeliness <- function(lab_data, end_date = Sys.Date()) {
   three_month_summary <- lab_data |>
     # Lab processing timeliness
     # From date stool received in lab to final rRTPCR results
-    dplyr::mutate(days.rec.lab.final = DateFinalrRTPCRResults - DateStoolReceivedinLab,
+    dplyr::mutate(days.rec.lab.final = DateNotificationtoHQ - DateStoolReceivedinLab,
                   year_month = lubridate::floor_date(CaseDate, unit = "months"),
                   month = lubridate::month(CaseDate, label = TRUE)) |>
     # Filter erroneous data
