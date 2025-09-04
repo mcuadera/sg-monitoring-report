@@ -1,3 +1,20 @@
+#' Get median AFP cases reported
+#'
+#'  @description
+#'  Calculates the median monthly AFP cases per country in the current year and
+#'  the median of the previous three years.
+#'
+#' @param afp_data `tibble` AFP data.
+#' @param end_date `str` End date of analysis. Defaults to the current date.
+#'
+#' @returns `tibble` Summary of monthly cases reported
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- sirfunctions::get_all_polio_data()
+#' summary <- get_afp_cases_reported(raw_data$afp)
+#' }
 get_afp_cases_reported <- function(afp_data, end_date = Sys.Date()) {
 
   # Prepare month and year columns
