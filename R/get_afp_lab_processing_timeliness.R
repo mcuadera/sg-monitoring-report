@@ -22,21 +22,17 @@ get_afp_lab_processing_timeliness <- function(lab_data, end_date = Sys.Date()) {
   start_date_month <- end_date - months(3)
 
   # Define the three month periods
-  included_months <- dplyr::tibble(dates = seq(start_date_month,
-                                               end_date_month,
+  included_months <- dplyr::tibble(dates = seq(lubridate::floor_date(end_date - lubridate::years(3) - months(3)),
+                                               lubridate::floor_date(end_date - months(1)),
                                                by = "months")) |>
-    dplyr::mutate(month = months(dates, abbreviate = TRUE)) |>
-    dplyr::pull(month)
+    dplyr::mutate(month = months(dates, abbreviate = TRUE),
+                  year = lubridate::year(dates)) |>
+    dplyr::select(month, year) |>
+    dplyr::filter(month %in% format(seq(lubridate::floor_date(end_date - months(3), unit = "months"),
+                                                          end_date - months(1),
+                                                          by = "months"), format = "%b"))
 
-  # Check if there are data available for the current year
-  check <- lab_data |>
-    dplyr::filter(dplyr::between(CaseDate, start_date_month, end_date_month))
-  if (nrow(check) == 0) {
-    cli::cli_alert_warning(paste0("No data available for the previous three months from the end date.",
-                                  "No calculations will be available in the year of the end date."))
-  }
-
-  three_month_summary <- lab_data |>
+  valid_lab_data <- lab_data |>
     # Lab processing timeliness
     # From date stool received in lab to final rRTPCR results
     dplyr::mutate(days.rec.lab.final = DateNotificationtoHQ - DateStoolReceivedinLab,
@@ -44,11 +40,35 @@ get_afp_lab_processing_timeliness <- function(lab_data, end_date = Sys.Date()) {
                   month = lubridate::month(CaseDate, label = TRUE)) |>
     # Filter erroneous data
     dplyr::filter(!is.na(.data$days.rec.lab.final),
-                  (.data$days.rec.lab.final >= 0 & .data$days.rec.lab.final <= 365),
-                  month %in% included_months) |>
+                  (.data$days.rec.lab.final >= 0 & .data$days.rec.lab.final <= 365))
+
+  full_grid <- tidyr::expand_grid(
+    country = unique(lab_data$country),
+    year = unique(included_months$year),
+    month = unique(included_months$month)) |>
+    dplyr::right_join(dplyr::distinct(lab_data |> dplyr::select(whoregion, country)))
+
+  summary <- valid_lab_data |>
     dplyr::group_by(whoregion, country, year, month) |>
-    dplyr::summarize(median = median(days.rec.lab.final, na.rm = TRUE), .groups = "drop") |>
-    tidyr::pivot_wider(names_from = year, values_from = median)
+    dplyr::summarize(median = median(days.rec.lab.final, na.rm = TRUE), .groups = "drop")
+
+  summary_full <- dplyr::left_join(full_grid, summary) |>
+    dplyr::mutate(median = tidyr::replace_na(as.numeric(median), 0))
+
+  current_year <- summary_full |>
+    dplyr::filter(year == year(end_date)) |>
+    dplyr::select(-year) |>
+    dplyr::rename(!!paste0(year(end_date), " median") := median)
+
+  previous_years <- summary_full |>
+    dplyr::filter(year != year(end_date)) |>
+    dplyr::group_by(whoregion, country, month) |>
+    dplyr::summarize(median = median(median, na.rm = TRUE)) |>
+    dplyr::rename(!!paste0(year(end_date) - 3, "-", year(end_date) - 1, " median") := median)
+
+  three_month_summary <- dplyr::left_join(previous_years, current_year)
+
+  cli::cli_alert_info("Note: If end date is not the month end, comparisons from the previous years may be inaccurate")
 
   return(three_month_summary)
 }
